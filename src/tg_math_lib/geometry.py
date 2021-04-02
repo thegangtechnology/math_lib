@@ -3,36 +3,29 @@ from typing import Tuple, Union
 import numpy as np
 
 
-def line_point_shortest_dist(r: np.ndarray, v: np.ndarray, p: np.ndarray, return_t: bool = False) \
-        -> Union[float, Tuple[float, float]]:
+def line_point_shortest_dist(r: np.ndarray, v: np.ndarray, p: np.ndarray) -> Tuple[float, float]:
     """ Find the shortest distance between point p
     and line y(t) = r + v * t
 
     :param r: a point on the line
     :param v: direction of line
     :param p: interested point
-    :param return_t: whether t should also be returned
-                alongside the minimal distance
-    :return: either the shortest distance, or
-                the shortest distance and t value that gives it
+    :return: the shortest distance and t value that gives it
     """
 
     t = np.dot(v, p - r) / np.dot(v, v)
     d = np.linalg.norm((r + v * t) - p)
-    if return_t:
-        return d, t
-    else:
-        return d
+    return d, t
 
 
 def line_line_shortest_dist_unbounded(r1: np.ndarray, v1: np.ndarray, r2: np.ndarray, v2: np.ndarray,
-                                      return_t: bool = False, eps: float = 1e-4) \
-        -> Union[float, Tuple[float, Tuple[float, float]]]:
+                                      eps: float = 1e-5) -> Tuple[float, Tuple[float, float]]:
     """ Find the shortest distance between two lines
     in the form y(t1) = r1 + v1 * t1 and y(t2) = r2 + v2 * t2
 
     If the two lines are parallel then distance will be correct
-    but there are infinitely many (t1, t2) that gives that distance
+    but there are infinitely many (t1, t2) that gives that distance,
+    of which the function will pick only one of
 
     For bounded t1 and t2, see shortest_distance_bounded
 
@@ -40,11 +33,8 @@ def line_line_shortest_dist_unbounded(r1: np.ndarray, v1: np.ndarray, r2: np.nda
     :param v1: direction of line 1
     :param r2: a point on line 2
     :param v2: direction of line 2
-    :param return_t: whether t1, t2 should also be returned
-                alongside the minimal distance
     :param eps: tolerance for checking parallel lines
-    :return: either the shortest distance, or
-                the shortest distance and t1, t2 that gives it
+    :return: the shortest distance and t1, t2 that gives it
     """
 
     # check that lines are not parallel
@@ -60,23 +50,20 @@ def line_line_shortest_dist_unbounded(r1: np.ndarray, v1: np.ndarray, r2: np.nda
         # case where two lines are parallel
         # then fix one point and find shortest distance to that point
         t1 = 0
-        d, t2 = line_point_shortest_dist(r2, v2, r1, return_t=True)
+        d, t2 = line_point_shortest_dist(r2, v2, r1)
 
-    if return_t:
-        return d, (t1, t2)
-    else:
-        return d
+    return d, (t1, t2)
 
 
 def line_line_shortest_dist_bounded(r1: np.ndarray, v1: np.ndarray, r2: np.ndarray, v2: np.ndarray,
-                                    return_t: bool = False, eps: float = 1e-4) \
-        -> Union[float, Tuple[float, Tuple[float, float]]]:
+                                    eps: float = 1e-5) -> Tuple[float, Tuple[float, float]]:
     """ Find the shortest distance between two lines
     in the form y(t1) = r1 + v1 * t1 and y(t2) = r2 + v2 * t2
     where 0 <= t1, t2 <= 1
 
     If the two lines are parallel then there may be
     infinitely many (t1, t2) that gives minimal distance
+    but the function will only give one of the valid solutions
 
     For unbounded t1 and t2, see shortest_distance_unbounded
 
@@ -84,15 +71,12 @@ def line_line_shortest_dist_bounded(r1: np.ndarray, v1: np.ndarray, r2: np.ndarr
     :param v1: direction of line 1
     :param r2: a point on line 2
     :param v2: direction of line 2
-    :param return_t: whether t1, t2 should also be returned
-                alongside the minimal distance
     :param eps: tolerance for checking parallel lines
-    :return: either the shortest distance, or
-                the shortest distance and t1, t2 that gives it
+    :return: the shortest distance and t1, t2 that gives it
     """
 
     # check against unbounded version first
-    best_dist, (best_t1, best_t2) = line_line_shortest_dist_unbounded(r1, v1, r2, v2, return_t=True, eps=eps)
+    best_dist, (best_t1, best_t2) = line_line_shortest_dist_unbounded(r1, v1, r2, v2, eps=eps)
 
     if not (0 <= best_t1 <= 1 and 0 <= best_t2 <= 1):
 
@@ -137,7 +121,4 @@ def line_line_shortest_dist_bounded(r1: np.ndarray, v1: np.ndarray, r2: np.ndarr
                         best_t1 = t1_guess
                         best_t2 = t2_guess
 
-    if return_t:
-        return best_dist, (best_t1, best_t2)
-    else:
-        return best_dist
+    return best_dist, (best_t1, best_t2)
